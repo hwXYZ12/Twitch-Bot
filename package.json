@@ -1,0 +1,25 @@
+{
+  "name": "twitch-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bot": "gulp && node dist/index"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-core": "^6.11.4",
+    "babel-preset-env": "^1.4.0",
+    "babel-preset-stage-0": "^6.24.1",
+    "electron": "^1.6.11",
+    "gulp": "git+https://github.com/gulpjs/gulp.git#4.0",
+    "gulp-babel": "^6.1.2"
+  },
+  "dependencies": {
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "tmi.js": "^1.1.1"
+  }
+}
