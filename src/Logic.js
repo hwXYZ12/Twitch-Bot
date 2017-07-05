@@ -6,15 +6,69 @@ const ANIMATIONS_CHECK_RATE = 2000;
 const STALL_TIME = 4500;
 const CHEER_MESSAGE_1 = " cheered with ";
 const CHEER_MESSAGE_2 = " bits!";
+const CHEER_SOUND_PATH = "sounds\\bits.ogg";
+const CHEER_GIF_PATH = ["bitGifs\\gray.gif",
+						"bitGifs\\purple.gif",
+						"bitGifs\\green.gif",
+						"bitGifs\\blue.gif",
+						"bitGifs\\red.gif"];
 export default class Logic {
 	
+	// pop a single cheer alert from the stack and display it
+	handleAnimations(){
+
+		if (this.cheerStack.length && this.notAnimating) {
+
+			// lock animation resources
+			this.notAnimating = false;
+
+			// set the  alert name
+			let theCheer = this.cheerStack.pop();
+			let theName = theCheer.name;
+			let theText = document.getElementById('cheerText');
+			let theAmount = theCheer.bits;
+			theText.textContent = theName + CHEER_MESSAGE_1 + theAmount + CHEER_MESSAGE_2;
+
+			// set the alert animation
+			let theAnimation = document.getElementById('cheerAnimation');
+			theAnimation.src="bitGifs\\gray.gif";
+
+			// transition the cheer alert into view
+			let cheerAlert = document.getElementById('cheerAlert');
+			cheerAlert.classList.add('isVisible');
+
+			// play the current alert sound
+			this.cheerSound.setTime = 0.00;
+			this.cheerSound.play();
+
+			// transition the cheer alert out of view
+			setTimeout(()=>{
+
+				// begin animation to remove the cheer alert
+				cheerAlert.classList.remove('isVisible');
+
+				// unlock animation resources										
+				setTimeout(() => {
+					this.notAnimating = true;
+				}, TRANSITION_TIME);
+
+			}, TRANSITION_TIME + STALL_TIME);
+		}
+		
+	}	
+
 	constructor(client, admin) {
 		this.client = client;
 		this.admin = admin;
 		this.cheerStack = [];
 		this.notAnimating = true;
+			
+		// cheer alert sound	
+		this.cheerSound = new Audio();
+		this.cheerSound.src = CHEER_SOUND_PATH;
 		
-		setInterval(handleAnimations, ANIMATIONS_CHECK_RATE);			
+		let boundAnimations=this.handleAnimations.bind(this);
+		setInterval(boundAnimations, ANIMATIONS_CHECK_RATE);			
 	}
 	async run() {
 	
@@ -39,12 +93,20 @@ export default class Logic {
 				}
 			});
 			client.on("cheer", (channel, userstate, message) => {
-				let cheer;
+				let cheer = {};
 				cheer.bits=userstate.bits;
-				cheer.name=userstate.display-name;
+				cheer.name=userstate.username;
 				cheerStack.push(cheer);
 			});
 			client.on("message", (channel, user, message) => {
+
+				// using test messages
+				let cheer = {};
+				cheer.bits=1;
+				cheer.name=user.username;
+				cheerStack.push(cheer);
+
+
 				if (user.username === client.opts.identity.username) {
 					/* Don't take the bot's own messages into consideration */
 					return;
@@ -177,49 +239,5 @@ export default class Logic {
 			console.log("Failed to connect. Sorry about that.");
 		}
 	}
-			
-	// pop a single cheer alert from the stack and display it
-	handleAnimations(){
-		
-		const { cheerStack, notAnimating } = this;
-		
-		if(cheerStack.length && notAnimating){
-
-			// lock animation resources
-			notAnimating = false;
-		
-			// set the  alert name
-			let theCheer = cheerStack.pop();
-			let theName = theCheer.name;
-			let theText = document.getElementById('cheerText');
-			let theAmount = theCheer.bits;
-			theText.textContent = theName+CHEER_MESSAGE_1+theAmount+CHEER_MESSAGE_2;
-
-			// transition the cheer alert into view
-			let cheerAlert = document.getElementById('cheerAlert');
-			cheerAlert.classList.add('isVisible');
-			
-			// play the current alert sound
-			cheerSound.setTime = 0.00;
-			cheerSound.play();
-												
-			// transition the cheer alert out of view
-			setTimeout(transitionAlert, TRANSITION_TIME+STALL_TIME);
-			
-			function transitionAlert(){
-				
-				// begin animation to remove the cheer alert
-				cheerAlert.classList.remove('isVisible');
-				
-				// unlock animation resources										
-				setTimeout(() => {notAnimating = true;}, TRANSITION_TIME);
-				
-			}
-		
-		}
-		
-	}
-
-	setInterval(handleAnimations, ANIMATIONS_CHECK_RATE);	
 
 }
