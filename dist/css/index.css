@@ -2,20 +2,22 @@
 	background: rgba(0,255,0,1.0);
 }
 
-#followerAlert{
+#cheerAlert{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	transform: scale(0) rotateY(0deg);
-	transition: transform 1s, rotateY 1s;
+	visibility: hidden;
+	/*transform: scale(0) rotateY(0deg);
+	transition: transform 1s, rotateY 1s;*/
 }
 
-#followerAlert.isVisible{
-	transform: scale(1) rotateY(720deg);
-	rotateY: 720deg;
+#cheerAlert.isVisible{
+	visibility: visible;
+	/*transform: scale(1) rotateY(720deg);
+	rotateY: 720deg;*/
 }
 
-#followerText{
+#cheerText{
 	font-family: 'Roboto', sans-serif;
     font-size: 40px;
     color: #fff;
