@@ -11,13 +11,13 @@ function createWindow () {
 	
 	const WINDOW_WIDTH = 900;
 	const WINDOW_HEIGHT = 300;
-	const WINDOW_INITIAL_X = 0;//-900;
-	const WINDOW_INITIAL_Y = 0;//10;
+	const WINDOW_INITIAL_X = -1800;
+	const WINDOW_INITIAL_Y = -600;//10;
 	
   // Create the browser window.
   win = new BrowserWindow({width: WINDOW_WIDTH,
 							height: WINDOW_HEIGHT,
-							frame: true,
+							frame: false,
 							x: WINDOW_INITIAL_X,
 							y: WINDOW_INITIAL_Y});
 

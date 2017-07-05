@@ -20,13 +20,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-const TRANSITION_TIME = 2000;
+const TRANSITION_TIME = 500;
 const ANIMATIONS_CHECK_RATE = 2000;
-const STALL_TIME = 4500;
+const STALL_TIME = 8500;
 const CHEER_MESSAGE_1 = " cheered with ";
 const CHEER_MESSAGE_2 = " bits!";
+const CHEER_MESSAGE_3 = " bit!";
 const CHEER_SOUND_PATH = "sounds\\bits.ogg";
-const CHEER_GIF_PATH = ["bitGifs\\gray.gif", "bitGifs\\purple.gif", "bitGifs\\green.gif", "bitGifs\\blue.gif", "bitGifs\\red.gif"];
+const CHEER_GIF_PATH = ["bitGifs\\gray.gif", "bitGifs\\purple.gif", "bitGifs\\green.gif", "bitGifs\\blue.gif", "bitGifs\\red.gif", "bitGifs\\gold.gif"];
 class Logic {
 
 	// pop a single cheer alert from the stack and display it
@@ -42,11 +43,27 @@ class Logic {
 			let theName = theCheer.name;
 			let theText = document.getElementById('cheerText');
 			let theAmount = theCheer.bits;
-			theText.textContent = theName + CHEER_MESSAGE_1 + theAmount + CHEER_MESSAGE_2;
+			if (theAmount == 1) theText.textContent = theName + CHEER_MESSAGE_1 + theAmount + CHEER_MESSAGE_3;else theText.textContent = theName + CHEER_MESSAGE_1 + theAmount + CHEER_MESSAGE_2;
+
+			// pick the correct alert animation
+			let which = 0;
+			if (theAmount >= 1 && theAmount < 100) {
+				which = 0;
+			} else if (theAmount >= 100 && theAmount < 1000) {
+				which = 1;
+			} else if (theAmount >= 1000 && theAmount < 5000) {
+				which = 2;
+			} else if (theAmount >= 5000 && theAmount < 10000) {
+				which = 3;
+			} else if (theAmount >= 10000 && theAmount < 100000) {
+				which = 4;
+			} else if (theAmount >= 100 && theAmount < 1000) {
+				which = 5;
+			}
 
 			// set the alert animation
 			let theAnimation = document.getElementById('cheerAnimation');
-			theAnimation.src = "bitGifs\\gray.gif";
+			theAnimation.src = CHEER_GIF_PATH[which];
 
 			// transition the cheer alert into view
 			let cheerAlert = document.getElementById('cheerAlert');
@@ -114,12 +131,6 @@ class Logic {
 					cheerStack.push(cheer);
 				});
 				client.on("message", function (channel, user, message) {
-
-					// using test messages
-					let cheer = {};
-					cheer.bits = 1;
-					cheer.name = user.username;
-					cheerStack.push(cheer);
 
 					if (user.username === client.opts.identity.username) {
 						/* Don't take the bot's own messages into consideration */
