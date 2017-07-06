@@ -12,7 +12,7 @@ function createWindow () {
 	const WINDOW_WIDTH = 900;
 	const WINDOW_HEIGHT = 300;
 	const WINDOW_INITIAL_X = -1800;
-	const WINDOW_INITIAL_Y = -600;//10;
+	const WINDOW_INITIAL_Y = 600;
 	
   // Create the browser window.
   win = new BrowserWindow({width: WINDOW_WIDTH,

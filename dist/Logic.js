@@ -57,7 +57,7 @@ class Logic {
 				which = 3;
 			} else if (theAmount >= 10000 && theAmount < 100000) {
 				which = 4;
-			} else if (theAmount >= 100 && theAmount < 1000) {
+			} else if (theAmount >= 100000) {
 				which = 5;
 			}
 
@@ -111,6 +111,8 @@ class Logic {
 			const cocQueue = [];
 			let cocLink = "";
 			let rotateQueue = false;
+			let instructionsReady = true;
+			const QUEUE_INSTRUCTIONS_COOLDOWN = 45000;
 			try {
 				yield client.connect();
 				client.on("chat", function (channel, user) {
@@ -158,7 +160,7 @@ class Logic {
 								isWhisper: false
 							}));
 						}
-						if (message.toLowerCase() === "!q") {
+						if (message.toLowerCase() === "!q" || message.toLowerCase() === "!queue") {
 
 							// push user onto back of CoC queue user may only appear once in the queue
 							if (!cocQueue.includes(user.username)) {
@@ -166,16 +168,36 @@ class Logic {
 								let place = cocQueue.length + 1;
 								let body = `You've been placed at spot ${place} in the CoC Queue.`;
 								let whisper = `PRIVMSG #jtv :/w ${user.username} ${body}`;
-								return queue.enqueue(new _Message2.default({
+								queue.enqueue(new _Message2.default({
 									channel,
 									text: whisper,
 									isWhisper: true
 								}));
 							}
+
+							// anyone trying to get into the queue may trigger
+							// this message in chat which explains how to use the queue
+							if (instructionsReady) {
+								let message = `To use the queue turn on your whispers and initiate the
+											conversation with the bot by typing: /w binarybot2013 hello!`;
+								queue.enqueue(new _Message2.default({
+									channel,
+									text: message,
+									isWhisper: false
+								}));
+
+								// after a cooldown allow the message to be used again
+								instructionsReady = false;
+								setInterval(function () {
+									instructionsReady = true;
+								}, QUEUE_INSTRUCTIONS_COOLDOWN);
+							}
+
+							return;
 						}
 						if (message.toLowerCase() === "!qlength") {
 
-							let place = cocQueue.length;
+							let place = cocQueue.length + 1;
 							let body = `The CoC Queue is of length ${place}.`;
 							let whisper = `PRIVMSG #jtv :/w ${user.username} ${body}`;
 							return queue.enqueue(new _Message2.default({
