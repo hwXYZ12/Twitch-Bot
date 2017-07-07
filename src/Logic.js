@@ -101,7 +101,7 @@ export default class Logic {
 		let cocLink = "";
 		let rotateQueue = false;
 		let instructionsReady = true;
-		const QUEUE_INSTRUCTIONS_COOLDOWN = 45000;
+		const QUEUE_INSTRUCTIONS_COOLDOWN = 60000;
 		try {
 			await client.connect();
 			client.on("chat", (channel, user) => {
@@ -153,6 +153,17 @@ export default class Logic {
 					if (message.toLowerCase() === "!q"
 						|| message.toLowerCase() === "!queue") {
 
+						// anyone trying to get into the queue will add
+						// this message to the queue
+						let message = `To use the queue turn on your whispers and initiate the
+										conversation with the bot by typing: /w binarybot2013 hello!`;
+						queue.enqueue(new Message({
+							channel,
+							text: message,
+							isWhisper: false,
+							isInstructions: true
+						}));
+						
 						// push user onto back of CoC queue user may only appear once in the queue
 						if (!cocQueue.includes(user.username)){
 							cocQueue.push(`${user.username}`);
@@ -166,24 +177,7 @@ export default class Logic {
 							}));
 						}
 
-						// anyone trying to get into the queue may trigger
-						// this message in chat which explains how to use the queue
-						if(instructionsReady){
-							let message = `To use the queue turn on your whispers and initiate the
-											conversation with the bot by typing: /w binarybot2013 hello!`;
-							queue.enqueue(new Message({
-								channel,
-								text: message,
-								isWhisper: false
-							}));
-
-							// after a cooldown allow the message to be used again
-							instructionsReady = false;
-							setInterval(()=>{instructionsReady = true}, QUEUE_INSTRUCTIONS_COOLDOWN);
-						}
-
-						return;
-						
+						return;						
 					}
 					if (message.toLowerCase() === "!qlength") {
 						

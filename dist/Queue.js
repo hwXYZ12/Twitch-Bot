@@ -9,15 +9,28 @@ class Queue {
 		this.buffer = [];
 
 		this.client = client;
+		this.instructionsReady = true;
+		const QUEUE_INSTRUCTIONS_COOLDOWN = 30000;
 		setInterval(() => {
 			if (this.buffer.length) {
 				const {
 					text,
 					channel,
-					isWhisper
+					isWhisper,
+					isInstructions
 				} = this.dequeue();
 				if (isWhisper) {
 					client.raw(text);
+				} else if (isInstructions) {
+					if (this.instructionsReady) {
+						this.instructionsReady = false;
+						this.client.say(channel, text);
+
+						// after a cooldown allow the message to be used again
+						setInterval(() => {
+							this.instructionsReady = true;
+						}, QUEUE_INSTRUCTIONS_COOLDOWN);
+					}
 				} else {
 					this.client.say(channel, text);
 				}
