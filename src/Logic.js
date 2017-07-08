@@ -14,6 +14,7 @@ const CHEER_GIF_PATH = ["bitGifs\\gray.gif",
 						"bitGifs\\blue.gif",
 						"bitGifs\\red.gif",
 						"bitGifs\\gold.gif"];
+const CHANNEL = "11111011101";
 export default class Logic {
 	
 	// pop a single cheer alert from the stack and display it
@@ -97,9 +98,9 @@ export default class Logic {
 		const { client, admin, cheerStack } = this;
 		const https = require('https');
 		const queue = new Queue(client);
-		const cocQueue = [];
+		const subCocQueue = [];
+		const nonSubCocQueue = [];
 		let cocLink = "";
-		let rotateQueue = false;
 		let instructionsReady = true;
 		const QUEUE_INSTRUCTIONS_COOLDOWN = 60000;
 		try {
@@ -165,10 +166,20 @@ export default class Logic {
 						}));
 						
 						// push user onto back of CoC queue user may only appear once in the queue
-						if (!cocQueue.includes(user.username)){
-							cocQueue.push(`${user.username}`);
-							let place = cocQueue.length+1;
-							let body = `You've been placed at spot ${place} in the CoC Queue.`;
+						if (!subCocQueue.includes(user.username)
+							&&!nonSubCocQueue.includes(user.username)){
+
+							let place;
+							let body;
+							if(user.subscriber){
+								subCocQueue.push(`${user.username}`);
+								place = subCocQueue.length;
+								body = `You've been placed at spot ${place} in the Subscriber CoC Queue.`;
+							} else {
+								nonSubCocQueue.push(`${user.username}`);
+								place = nonSubCocQueue.length;
+								body = `You've been placed at spot ${place} in the Non-Subscriber CoC Queue.`;
+							}
 							let whisper = `PRIVMSG #jtv :/w ${user.username} ${body}`;
 							queue.enqueue(new Message({
 								channel,
@@ -181,8 +192,10 @@ export default class Logic {
 					}
 					if (message.toLowerCase() === "!qlength") {
 						
-						let place = cocQueue.length+1;
-						let body = `The CoC Queue is of length ${place}.`;
+						let place1 = subCocQueue.length;
+						let place2 = nonSubCocQueue.length;
+						let body = `The Sub CoC Queue is of length ${place1} and
+									the Non Sub CoC Queue is of length ${place2}.`;
 						let whisper = `PRIVMSG #jtv :/w ${user.username} ${body}`;
 						return queue.enqueue(new Message({
 							channel,
@@ -230,8 +243,6 @@ export default class Logic {
 						
 						console.log(cocLink);
 
-						// not even 7 people in the queue
-
 						// whisper to self
 						let gibLink = `CoC Link: ${cocLink}`;
 						let whisper2 = `PRIVMSG #jtv :/w ${admin} ${gibLink}`;
@@ -240,20 +251,35 @@ export default class Logic {
 							text: whisper2,
 							isWhisper: true
 						}));
-						
 
 						//  shift at most 7 users from the front of the CoC queue
 						//  and send each user a link to the match
 						for(let i = 0; i < 7; ++i){
-							if(cocQueue.length > 0){
-								let targetUser = cocQueue.shift();
+							let a = nonSubCocQueue.length;
+							let b = subCocQueue.length;
+							if(a!=0 || b!=0){
+								let subProbability =1-a/(a+1.5*b);
+								let targetUser;
+								if(Math.random() <= subProbability){
+									targetUser = subCocQueue.shift();
+								} else {
+									targetUser = nonSubCocQueue.shift();
+								}
 								let body = `CoC Link: ${cocLink}`;
 								let whisper = `PRIVMSG #jtv :/w ${targetUser} ${body}`;
 								queue.enqueue(new Message({
 									channel: "",
 									text: whisper,
 									isWhisper: true
+								}));							
+							}else{
+								let message = `CoC Link: ${cocLink}`;
+								queue.enqueue(new Message({
+									channel: CHANNEL,
+									text: message,
+									isWhisper: false
 								}));
+								break;
 							}
 						}
 						return
