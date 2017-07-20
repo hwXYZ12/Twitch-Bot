@@ -15,7 +15,8 @@
     "babel-preset-stage-0": "^6.24.1",
     "electron": "^1.6.11",
     "gulp": "github:gulpjs/gulp#4.0",
-    "gulp-babel": "^6.1.2"
+    "gulp-babel": "^6.1.2",
+    "twitch-api-v5": "^2.0.2"
   },
   "dependencies": {
     "request": "^2.81.0",

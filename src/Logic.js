@@ -3,6 +3,7 @@ import Queue from "./Queue";
 import createPrivateClash from "./ClashOfCode";
 const TRANSITION_TIME = 500;
 const ANIMATIONS_CHECK_RATE = 2000;
+const SUBS_CHECK_RATE = 10000;
 const STALL_TIME = 8500;
 const CHEER_MESSAGE_1 = " cheered with ";
 const CHEER_MESSAGE_2 = " bits!";
@@ -14,7 +15,15 @@ const CHEER_GIF_PATH = ["bitGifs\\gray.gif",
 						"bitGifs\\blue.gif",
 						"bitGifs\\red.gif",
 						"bitGifs\\gold.gif"];
+const COC_MESSAGE = `To use the queue, turn on your whispers and initiate the conversation with the bot by typing: /w binarybot2013 hello!`;
+const KEYS_FILE_PATH = 'C:\\Users\\Will\\Desktop\\more stuff\\even more stuff\\alertKeys.json';
 const CHANNEL = "11111011101";
+const MAX_SUB_CHECK = 100;
+const fs = require('fs');
+
+// get a reference to the twitch api
+const twitchApi = require('twitch-api-v5');
+
 export default class Logic {
 	
 	// pop a single cheer alert from the stack and display it
@@ -78,20 +87,68 @@ export default class Logic {
 			}, TRANSITION_TIME + STALL_TIME);
 		}
 		
-	}	
+	}
+	
+	// call to the twitch api every few seconds in order to maintain a local
+	// list of subs such that whispers to the bot don't require an API to check
+	// sub status
+	checkSubs(){
+		
+		// Keys should be grabbed only once but this probably won't matter
+		// too much since we'll be calling it with a slow poll rate
+		// get client id and client secret from local file	
+		let keys = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf-8'));	
+			
+		// get keys from the file
+		let clientId = keys['clientId'];
+		let clientSecret = keys['clientSecret'];	
+		let channelId = keys['channelId'];		
+		let authToken = keys['authToken'];
+		
+		// set api client id
+		twitchApi.clientID = clientId;
+
+		// try to call the twitch api for the sub list
+		try{
+
+			twitchApi.channels.subs({auth: authToken, channelID: channelId, limit: MAX_SUB_CHECK}, (errors, ret) => {			
+
+				let setOfSubs = new Set();
+				let newList = ret.subscriptions;
+				for (let i=0; i < newList.length ; i++) {
+					
+					// push only the ids of subs to keep track of internally
+					setOfSubs.add(newList[i].user._id);
+				}
+
+				// pass the reference to the new sub list to the logic class
+				// to be used when someone whispers to the bot
+				this.currentSubIds = setOfSubs;
+
+			});
+
+		} catch(e){
+			console.log("ERROR - Error processing sub API call.");
+		}
+		
+	}
 
 	constructor(client, admin) {
 		this.client = client;
 		this.admin = admin;
 		this.cheerStack = [];
 		this.notAnimating = true;
+		this.currentSubIds = new Set();
 			
 		// cheer alert sound	
 		this.cheerSound = new Audio();
 		this.cheerSound.src = CHEER_SOUND_PATH;
 		
 		let boundAnimations=this.handleAnimations.bind(this);
-		setInterval(boundAnimations, ANIMATIONS_CHECK_RATE);			
+		setInterval(boundAnimations, ANIMATIONS_CHECK_RATE);
+		
+		let boundSubCheck=this.checkSubs.bind(this);
+		setInterval(boundSubCheck, SUBS_CHECK_RATE);			
 	}
 	async run() {
 	
@@ -103,6 +160,16 @@ export default class Logic {
 		let cocLink = "";
 		let instructionsReady = true;
 		const QUEUE_INSTRUCTIONS_COOLDOWN = 60000;
+									
+		// get client id and client secret from local file	
+		let keys = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf-8'));	
+			
+		// get keys from the file
+		let clientId = keys['clientId'];
+		let clientSecret = keys['clientSecret'];	
+		let channelId = keys['channelId'];		
+		let authToken = keys['authToken'];
+
 		try {
 			await client.connect();
 			client.on("chat", (channel, user) => {
@@ -126,7 +193,8 @@ export default class Logic {
 			client.on("message", (channel, user, message) => {
 
 				if (user.username === client.opts.identity.username) {
-					/* Don't take the bot's own messages into consideration */
+					// Don't take the bot's own messages into consideration
+					// and ignore whispers (there is already an event that handles the whispers)
 					return;
 				}
 				try {
@@ -150,14 +218,20 @@ export default class Logic {
 							text: `@${user.username} Hello hello, welcome welcome, hope your day is going well :)`,
 							isWhisper: false
 						}));
+					}				
+					if (message === "!wilkins") {
+						return queue.enqueue(new Message({
+							channel,
+							text: `@${user.username} have a warm one fellar  FeelsBadMan  :beers:  KKona`,
+							isWhisper: false
+						}));
 					}
 					if (message.toLowerCase() === "!q"
 						|| message.toLowerCase() === "!queue") {
 
 						// anyone trying to get into the queue will add
 						// this message to the queue
-						let message = `To use the queue turn on your whispers and initiate the
-										conversation with the bot by typing: /w binarybot2013 hello!`;
+						let message = COC_MESSAGE;
 						queue.enqueue(new Message({
 							channel,
 							text: message,
@@ -171,7 +245,8 @@ export default class Logic {
 
 							let place;
 							let body;
-							if(user.subscriber){
+							let isSubscriber = this.currentSubIds.has(user['user-id'])||user.subscriber;
+							if(isSubscriber){
 								subCocQueue.push(`${user.username}`);
 								place = subCocQueue.length;
 								body = `You've been placed at spot ${place} in the Subscriber CoC Queue.`;
@@ -232,7 +307,7 @@ export default class Logic {
 			});
 			client.on("whisper", async function (from, userstate, message, self) {
 				
-				// Don't listen to my own messages..
+				// Don't listen to my own messages...
 				if (self) return;
 
 				try {
@@ -240,8 +315,6 @@ export default class Logic {
 
 						const keys = require(`C:/Users/Will/Desktop/more stuff/even more stuff/cocKeys.json`)
 						cocLink = await createPrivateClash(keys.email, keys.password);
-						
-						console.log(cocLink);
 
 						// whisper to self
 						let gibLink = `CoC Link: ${cocLink}`;
@@ -252,9 +325,9 @@ export default class Logic {
 							isWhisper: true
 						}));
 
-						//  shift at most 7 users from the front of the CoC queue
+						//  shift at most 11 users from the front of the CoC queue
 						//  and send each user a link to the match
-						for(let i = 0; i < 7; ++i){
+						for(let i = 0; i < 11; ++i){
 							let a = nonSubCocQueue.length;
 							let b = subCocQueue.length;
 							if(a!=0 || b!=0){
@@ -272,19 +345,60 @@ export default class Logic {
 									text: whisper,
 									isWhisper: true
 								}));							
-							}else{
-								let message = `CoC Link: ${cocLink}`;
-								queue.enqueue(new Message({
-									channel: CHANNEL,
-									text: message,
-									isWhisper: false
-								}));
-								break;
 							}
 						}
 						return
 						
 					}
+					// TODO DELETE
+					/*if (false){//message.toLowerCase() === "!q"
+						//|| message.toLowerCase() === "!queue") {
+
+						// make an API call to Twitch to determine whether or not
+						// the user is a subscriber
+						let temp = userstate['user-id'];
+						client.api({
+							url: `https://api.twitch.tv/kraken/channels/${channelId}/subscriptions/${temp}`,
+							method: "GET",
+							headers: {
+								"Accept": "application/vnd.twitchtv.v5+json",
+								"Authorization": `OAuth ${authToken}`,
+								"Client-ID": clientId
+							}
+						}, function(err, res, body) {
+						
+							let isSubscriber = false;
+							if(res.hasOwnProperty("error")){
+								isSubscriber = false;
+							} else {
+								isSubscriber = true;
+							}
+
+							// push user onto back of CoC queue user may only appear once in the queue
+							if (!subCocQueue.includes(userstate.username)
+								&&!nonSubCocQueue.includes(userstate.username)){
+
+								let place;
+								let body;
+								if(isSubscriber){
+									subCocQueue.push(`${userstate.username}`);
+									place = subCocQueue.length;
+									body = `You've been placed at spot ${place} in the Subscriber CoC Queue.`;
+								} else {
+									nonSubCocQueue.push(`${userstate.username}`);
+									place = nonSubCocQueue.length;
+									body = `You've been placed at spot ${place} in the Non-Subscriber CoC Queue.`;
+								}
+								let whisper = `PRIVMSG #jtv :/w ${userstate.username} ${body}`;
+								queue.enqueue(new Message({
+									CHANNEL,
+									text: whisper,
+									isWhisper: true
+								}));
+							}
+
+						});					
+					}*/
 				}
 				catch (e) {
 					console.log(e);

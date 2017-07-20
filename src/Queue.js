@@ -10,7 +10,7 @@ export default class Queue {
 	constructor(client) {
 		this.client = client;
 		this.instructionsReady=true;
-		const QUEUE_INSTRUCTIONS_COOLDOWN = 30000;
+		const QUEUE_INSTRUCTIONS_COOLDOWN = 120000;
 		setInterval(() => {
 			if (this.buffer.length) {
 				const {
