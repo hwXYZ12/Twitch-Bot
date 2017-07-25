@@ -113,6 +113,11 @@ export default class Logic {
 
 			twitchApi.channels.subs({auth: authToken, channelID: channelId, limit: MAX_SUB_CHECK}, (errors, ret) => {			
 
+				if(ret == null){
+					console.log(errors);
+					return;
+				}
+
 				let setOfSubs = new Set();
 				let newList = ret.subscriptions;
 				for (let i=0; i < newList.length ; i++) {
