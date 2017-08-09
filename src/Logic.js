@@ -355,55 +355,6 @@ export default class Logic {
 						return
 						
 					}
-					// TODO DELETE
-					/*if (false){//message.toLowerCase() === "!q"
-						//|| message.toLowerCase() === "!queue") {
-
-						// make an API call to Twitch to determine whether or not
-						// the user is a subscriber
-						let temp = userstate['user-id'];
-						client.api({
-							url: `https://api.twitch.tv/kraken/channels/${channelId}/subscriptions/${temp}`,
-							method: "GET",
-							headers: {
-								"Accept": "application/vnd.twitchtv.v5+json",
-								"Authorization": `OAuth ${authToken}`,
-								"Client-ID": clientId
-							}
-						}, function(err, res, body) {
-						
-							let isSubscriber = false;
-							if(res.hasOwnProperty("error")){
-								isSubscriber = false;
-							} else {
-								isSubscriber = true;
-							}
-
-							// push user onto back of CoC queue user may only appear once in the queue
-							if (!subCocQueue.includes(userstate.username)
-								&&!nonSubCocQueue.includes(userstate.username)){
-
-								let place;
-								let body;
-								if(isSubscriber){
-									subCocQueue.push(`${userstate.username}`);
-									place = subCocQueue.length;
-									body = `You've been placed at spot ${place} in the Subscriber CoC Queue.`;
-								} else {
-									nonSubCocQueue.push(`${userstate.username}`);
-									place = nonSubCocQueue.length;
-									body = `You've been placed at spot ${place} in the Non-Subscriber CoC Queue.`;
-								}
-								let whisper = `PRIVMSG #jtv :/w ${userstate.username} ${body}`;
-								queue.enqueue(new Message({
-									CHANNEL,
-									text: whisper,
-									isWhisper: true
-								}));
-							}
-
-						});					
-					}*/
 				}
 				catch (e) {
 					console.log(e);
