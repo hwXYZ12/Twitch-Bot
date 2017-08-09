@@ -1,4 +1,4 @@
-Twitch Bot
+**Twitch Bot**
 
 An IRC bot that uses Node.js and, particularly, node packages to take care of all of the lower level details. This bot uses tmi.js to handle the messaging events and uses electron.js to interface with OBS to handle "cheering" (OBS uses a window capture to capture a green screen which displays animations produced using electron.js).
 
